@@ -113,7 +113,7 @@ func (h *Handler) AddSarafuNetworkFeaturedPool(ctx context.Context, event event.
 		return err
 	}
 
-	if err := h.store.InsertPool(ctx, event.ContractAddress, tokenName, tokenSymbol); err != nil {
+	if err := h.store.InsertPool(ctx, poolAddress, tokenName, tokenSymbol); err != nil {
 		return err
 	}
 
