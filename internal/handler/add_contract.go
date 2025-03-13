@@ -54,7 +54,12 @@ func (h *Handler) AddToken(ctx context.Context, event event.Event) error {
 		sinkAddress = ethutils.ZeroAddress
 	}
 
-	return h.store.InsertToken(ctx, event.ContractAddress, tokenName, tokenSymbol, tokenDecimals, sinkAddress.Hex())
+	if err := h.store.InsertToken(ctx, event.ContractAddress, tokenName, tokenSymbol, tokenDecimals, sinkAddress.Hex()); err != nil {
+		return err
+	}
+
+	h.cache.Set(event.ContractAddress)
+	return nil
 }
 
 func (h *Handler) AddPool(ctx context.Context, event event.Event) error {
@@ -77,5 +82,41 @@ func (h *Handler) AddPool(ctx context.Context, event event.Event) error {
 		return err
 	}
 
-	return h.store.InsertPool(ctx, event.ContractAddress, tokenName, tokenSymbol)
+	if err := h.store.InsertPool(ctx, event.ContractAddress, tokenName, tokenSymbol); err != nil {
+		return err
+	}
+
+	h.cache.Set(event.ContractAddress)
+	return nil
+}
+
+// This is a special method meant to improve the UX on https://sarafu.network/pools
+func (h *Handler) AddSarafuNetworkFeaturedPool(ctx context.Context, event event.Event) error {
+	// This is the only pool index
+	if event.ContractAddress != "0x01eD8Fe01a2Ca44Cb26D00b1309d7D777471D00C" {
+		return nil
+	}
+
+	var (
+		tokenName   string
+		tokenSymbol string
+	)
+
+	poolAddress := event.Payload["address"].(string)
+	contractAddress := w3.A(poolAddress)
+
+	if err := h.chainProvider.Client.CallCtx(
+		ctx,
+		eth.CallFunc(contractAddress, nameGetter).Returns(&tokenName),
+		eth.CallFunc(contractAddress, symbolGetter).Returns(&tokenSymbol),
+	); err != nil {
+		return err
+	}
+
+	if err := h.store.InsertPool(ctx, event.ContractAddress, tokenName, tokenSymbol); err != nil {
+		return err
+	}
+
+	h.cache.Set(poolAddress)
+	return nil
 }

@@ -48,5 +48,14 @@ func bootstrapRouter(handlerContainer *handler.Handler) *router.Router {
 		handlerContainer.IndexRemove,
 	)
 
+	// This is a special method meant to improve the UX on https://sarafu.network/pools
+	if ko.Bool("sarafu_network.featured_pools_enabled") {
+		lo.Info("sarafu network featured pools enabled, registering extra pool add handler")
+		router.RegisterRoute(
+			"TRACKER.INDEX_ADD",
+			handlerContainer.AddSarafuNetworkFeaturedPool,
+		)
+	}
+
 	return router
 }

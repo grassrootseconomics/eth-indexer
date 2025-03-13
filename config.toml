@@ -14,3 +14,6 @@ id = "eth-indexer-1"
 [chain]
 rpc_endpoint = "http://localhost:8545"
 chainid = 1337
+
+[sarafu_network]
+featured_pools_enabled = true
